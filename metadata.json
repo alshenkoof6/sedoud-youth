@@ -1,0 +1,6 @@
+{
+  "name": "Youth Meeting",
+  "description": "Church youth meeting management, engagement, QR attendance, pastoral follow-up, trips, rewards, and communication platform.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
