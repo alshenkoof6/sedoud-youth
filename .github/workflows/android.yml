@@ -19,12 +19,111 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
 
-    - name: Setup Gradle Wrapper if missing
+    - name: Auto-Generate Android Project Structure
       run: |
-        if [ ! -f "gradlew" ]; then
-          echo "Gradle wrapper not found. Generating wrapper..."
-          gradle wrapper
+        if [ ! -f "settings.gradle" ] && [ ! -f "settings.gradle.kts" ]; then
+          echo "No Android project root found. Creating minimal Android structure..."
+          
+          # Create settings.gradle
+          cat << 'EOF' > settings.gradle
+          pluginManagement {
+              repositories {
+                  google()
+                  mavenCentral()
+                  gradlePluginPortal()
+              }
+          }
+          dependencyResolutionManagement {
+              repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+              repositories {
+                  google()
+                  mavenCentral()
+              }
+          }
+          rootProject.name = "sedoud-youth"
+          include ':app'
+EOF
+
+          # Create root build.gradle
+          cat << 'EOF' > build.gradle
+          plugins {
+              id 'com.android.application' version '8.2.2' apply false
+              id 'org.jetbrains.kotlin.android' version '1.9.22' apply false
+          }
+EOF
+
+          # Create app directory structure
+          mkdir -p app/src/main/java/com/example/sedoudyouth
+          mkdir -p app/src/main/res/layout
+          mkdir -p app/src/main/res/values
+
+          # Create app/build.gradle
+          cat << 'EOF' > app/build.gradle
+          plugins {
+              id 'com.android.application'
+              id 'org.jetbrains.kotlin.android'
+          }
+
+          android {
+              namespace 'com.example.sedoudyouth'
+              compileSdk 34
+
+              defaultConfig {
+                  applicationId "com.example.sedoudyouth"
+                  minSdk 24
+                  targetSdk 34
+                  versionCode 1
+                  versionName "1.0"
+              }
+
+              buildTypes {
+                  release {
+                      minifyEnabled false
+                  }
+              }
+              compileOptions {
+                  sourceCompatibility JavaVersion.VERSION_17
+                  targetCompatibility JavaVersion.VERSION_17
+              }
+              kotlinOptions {
+                  jvmTarget = '17'
+              }
+          }
+
+          dependencies {
+              implementation 'androidx.core:core-ktx:1.12.0'
+              implementation 'androidx.appcompat:appcompat:1.6.1'
+              implementation 'com.google.android.material:material:1.11.0'
+          }
+EOF
+
+          # Create AndroidManifest.xml
+          cat << 'EOF' > app/src/main/AndroidManifest.xml
+          <?xml version="1.0" encoding="utf-8"?>
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+              <application
+                  android:allowBackup="true"
+                  android:label="Sedoud Youth"
+                  android:supportsRtl="true"
+                  android:theme="@style/Theme.MaterialComponents.DayNight.NoActionBar">
+                  <activity
+                      android:name=".MainActivity"
+                      android:exported="true">
+                      <intent-filter>
+                          <action android:name="android.intent.action.MAIN" />
+                          <category android:category="android.intent.category.LAUNCHER" />
+                      </intent-filter>
+                  </activity>
+              </application>
+          </manifest>
+EOF
+
+          # Move any existing .kt files into the java package directory
+          find . -maxdepth 2 -name "*.kt" -exec mv {} app/src/main/java/com/example/sedoudyouth/ \;
         fi
+
+    - name: Setup Gradle Wrapper
+      run: gradle wrapper
 
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
